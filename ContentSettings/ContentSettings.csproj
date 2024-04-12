@@ -62,7 +62,7 @@
     </ItemGroup>
 
     <ItemGroup Condition="$(CI) == 'true'">
-        <PackageReference Include="ContentWarning.GameLibs.Steam" Version="0.1.7-a-ngd.0" Publicize="true" PrivateAssets="All"/>
+        <PackageReference Include="ContentWarning.GameLibs.Steam" Version="0.1.9-b-ngd.0" Publicize="true" PrivateAssets="All"/>
     </ItemGroup>
 
     <ItemGroup>
