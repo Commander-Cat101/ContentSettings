@@ -1,25 +1,32 @@
 ﻿namespace SettingsTemplate;
 
 using BepInEx;
-using ContentSettings.API;
 using System.Collections.Generic;
+using ContentSettings.API.Attributes;
+using ContentSettings.API.Settings;
+using JetBrains.Annotations;
 using Zorro.Settings;
 
+[ContentWarningPlugin("SettingsTemplate", "1.0.0", true)]
 [BepInPlugin("SettingsTemplate", "SettingsTemplate", "1.0.0")]
 public class Main : BaseUnityPlugin
 {
     public static Main Instance { get; private set; } = null!;
 
-    public bool FeatureEnabled = true;
+    public bool FeatureEnabled { [UsedImplicitly] get; internal set; }
 
     private void Awake()
     {
         Instance = this;
-        SettingsLoader.RegisterSetting(new SettingTemplate());
     }
 }
 
-public class SettingTemplate : EnumSetting, IExposedSetting
+[SettingRegister("MODDED5", "TEST")]
+[SettingRegister("MODDED4", "TEST")]
+[SettingRegister("MODDED3", "TEST")]
+[SettingRegister("MODDED2", "TEST")]
+[SettingRegister("MODDED", "TEST")]
+public class ModFeatureSetting : EnumSetting, ICustomSetting
 {
     public override void ApplyValue() => Main.Instance.FeatureEnabled = Value != 0;
 
@@ -27,7 +34,16 @@ public class SettingTemplate : EnumSetting, IExposedSetting
 
     public string GetDisplayName() => "Mod Feature Enabled?";
 
-    public SettingCategory GetSettingCategory() => SettingCategory.Graphics;
-
     public override int GetDefaultValue() => 1;
+}
+
+[SettingRegister("MODDED", "TEST")]
+public class ModFeatureSetting2 : TextSetting, ICustomSetting
+{
+    public override void ApplyValue()
+    { }
+
+    public string GetDisplayName() => "Cool Feature";
+
+    protected override string GetDefaultValue() => "On";
 }

@@ -36,13 +36,13 @@ internal class SettingsPatch
     [HarmonyPatch(typeof(SettingCategoryTab), nameof(SettingCategoryTab.Select))]
     internal static bool SelectPatch(SettingCategoryTab __instance)
     {
-        if (__instance.name == "MODDED")
+        if (!SettingsLoader.HasTab(__instance.name))
         {
-            SettingsLoader.LoadSettingsMenu(__instance.settingsMenu);
-            return false;
+            return true;
         }
 
-        return true;
+        SettingsLoader.LoadSettingsMenu(__instance.name, __instance.settingsMenu);
+        return false;
     }
 
     /// <summary>
@@ -54,6 +54,7 @@ internal class SettingsPatch
     [HarmonyPatch(typeof(SettingsMenu), nameof(SettingsMenu.OnEnable))]
     internal static bool OnEnablePatch(SettingsMenu __instance)
     {
+        SettingsLoader.RegisterSettings();
         SettingsLoader.CreateSettings(__instance);
 
         return true;

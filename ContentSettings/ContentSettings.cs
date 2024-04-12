@@ -8,18 +8,27 @@
 namespace ContentSettings;
 
 using BepInEx;
+using BepInEx.Logging;
 using HarmonyLib;
 
 /// <summary>
 /// The main Content Settings plugin class.
 /// </summary>
+[ContentWarningPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_VERSION, true)]
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 public class ContentSettings : BaseUnityPlugin
 {
+    /// <summary>
+    /// Gets the logger of the plugin.
+    /// </summary>
+    internal static new ManualLogSource Logger { get; private set; } = null!;
+
     private Harmony Harmony { get; } = new (MyPluginInfo.PLUGIN_GUID);
 
     private void Awake()
     {
+        Logger = base.Logger;
+
         Harmony.PatchAll();
     }
 }
