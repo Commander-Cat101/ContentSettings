@@ -13,28 +13,28 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Inject slug/short variables
-      uses: rlespinasse/github-slug-action@v4
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
 
-    - name: Restore dependencies
-      run: dotnet restore
+      - name: Restore dependencies
+        run: dotnet restore
 
-    - name: Build
-      run: dotnet build --no-restore
+      - name: Build
+        run: dotnet build --no-restore
 
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
+      - name: Test
+        run: dotnet test --no-build --verbosity normal
 
-    - uses: actions/upload-artifact@v3
-      name: Upload Artifacts
-      with:
-        if-no-files-found: error
-        name: ${{ env.GITHUB_REPOSITORY_NAME_PART_SLUG }}.zip
-        path: "${{ github.workspace }}/**/bin/**/*.dll"
+      - uses: actions/upload-artifact@v3
+        name: Upload Artifacts
+        with:
+          if-no-files-found: error
+          name: ${{ env.GITHUB_REPOSITORY_NAME_PART_SLUG }}.zip
+          path: "${{ github.workspace }}/**/bin/**/*.dll"
