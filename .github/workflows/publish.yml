@@ -16,9 +16,6 @@ jobs:
           fetch-depth: 0
           filter: tree:0
 
-      - name: Inject slug/short variables
-        uses: rlespinasse/github-slug-action@v4
-
       - name: Setup .NET Env
         uses: actions/setup-dotnet@v3
         with:
@@ -46,22 +43,21 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nupkg-build
-          path: "./${{ env.GITHUB_REPOSITORY_NAME_PART_SLUG }}/**/bin/Release/*.nupkg"
+          path: "${{ github.workspace }}/**/bin/Release/*.nupkg"
 
       - name: Publishing to Thunderstore
         env:
           TCLI_AUTH_TOKEN: ${{ secrets.THUNDERSTORE_API_TOKEN }}
-          TCLI_NAMESPACE: ${{ vars.THUNDERSTORE_PACKAGE_NAMESPACE == '' && '' || format('--package-namespace {0}', vars.THUNDERSTORE_PACKAGE_NAMESPACE) }}
-        if: ${{ env.THUNDERSTORE_API_TOKEN != '' }}
+        if: ${{ env.TCLI_AUTH_TOKEN != '' }}
         run: |
-          dotnet tcli publish --config-path assets/thunderstore.toml ${{ env.TCLI_NAMESPACE }} --package-version ${{ env.PACKAGE_VERSION }}
+          dotnet tcli publish --config-path assets/thunderstore.toml --package-version ${{ env.PACKAGE_VERSION }}
 
       - name: Publish to NuGet.org
         env:
           NUGET_API_TOKEN: ${{ secrets.NUGET_API_TOKEN }}
         if: ${{ env.NUGET_API_TOKEN != '' }}
         run: |
-          dotnet nuget push ./${{ env.GITHUB_REPOSITORY_NAME_PART_SLUG }}/**/bin/Release/*.nupkg --api-key ${{ secrets.NUGET_API_TOKEN }} --source https://api.nuget.org/v3/index.json
+          dotnet nuget push ${{ github.workspace }}/**/bin/Release/*.nupkg --api-key ${{ secrets.NUGET_API_TOKEN }} --source https://api.nuget.org/v3/index.json
   
   upload-release-artifacts:
     needs: build
