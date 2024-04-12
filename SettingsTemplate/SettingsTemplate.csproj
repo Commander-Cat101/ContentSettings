@@ -5,6 +5,7 @@
         <Description>A template for using ContentSettings</Description>
 
         <TargetFramework>netstandard2.1</TargetFramework>
+        <IsPackable>false</IsPackable>
 
         <RestoreAdditionalProjectSources>
             https://api.nuget.org/v3/index.json;
