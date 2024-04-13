@@ -14,6 +14,8 @@ using UnityEngine.Localization.PropertyVariants;
 using JetBrains.Annotations;
 using System;
 using System.Reflection;
+using UnityEngine;
+using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 /// <summary>
@@ -54,6 +56,9 @@ public static class SettingsLoader
     [UsedImplicitly]
     public static void RegisterSetting(string tab, string category, Setting setting)
     {
+        var settingType = setting.GetType();
+        ContentSettings.Logger.LogInfo($"Registering setting {settingType.Name}({settingType.BaseType?.Name}) to tab {tab} and category {category}.");
+
         var settingsByCategory = SettingsByCategoryByTab
             .GetValueOrDefault(tab, new Dictionary<string, List<Setting>>());
         var settings = settingsByCategory.GetValueOrDefault(category, new List<Setting>());
@@ -63,18 +68,28 @@ public static class SettingsLoader
 
         settings.Add(setting);
 
-        if (!RegisteredSettings.ContainsKey(setting.GetType()))
+        if (!RegisteredSettings.ContainsKey(settingType))
         {
             setting.Load(SaveLoader);
             setting.ApplyValue();
 
-            RegisteredSettings.Add(setting.GetType(), setting);
+            RegisteredSettings.Add(settingType, setting);
         }
 
         if (IsInitialized)
         {
             IsDirty = true;
         }
+    }
+
+    /// <summary>
+    /// Register a custom setting to the default MODDED tab and empty category.
+    /// </summary>
+    /// <param name="setting">The setting to register.</param>
+    [UsedImplicitly]
+    public static void RegisterSetting(Setting setting)
+    {
+        RegisterSetting("MODDED", string.Empty, setting);
     }
 
     /// <summary>
@@ -136,13 +151,14 @@ public static class SettingsLoader
     /// <exception cref="System.Exception">Thrown when the existing tab to create the modded settings tab from is not found.</exception>
     internal static void CreateSettings(SettingsMenu menu)
     {
-        var settingsTabs = menu.transform.Find("Content")?.Find("TABS");
-        if (settingsTabs == null)
+        var tabs = menu.transform.Find("Content")?.Find("TABS");
+        if (tabs == null)
         {
             throw new Exception("Failed to find settings tab.");
         }
 
-        var existingTab = settingsTabs.GetChild(0)?.gameObject;
+        // BuildSettingsMenu(menu, tabs);
+        var existingTab = tabs.GetChild(0)?.gameObject;
         if (existingTab == null)
         {
             throw new Exception("Failed to find existing tab.");
@@ -150,12 +166,12 @@ public static class SettingsLoader
 
         foreach (var tab in SettingsByCategoryByTab.Keys)
         {
-            if (settingsTabs.Find(tab) != null)
+            if (tabs.Find(tab) != null)
             {
                 continue;
             }
 
-            var customSettingsTab = Object.Instantiate(existingTab, settingsTabs, true);
+            var customSettingsTab = Object.Instantiate(existingTab, tabs, true);
             customSettingsTab.name = tab;
 
             var customSettingsTabText = customSettingsTab.transform.GetChild(1);
@@ -171,6 +187,13 @@ public static class SettingsLoader
     /// </summary>
     internal static void RegisterSettings()
     {
+        if (IsInitialized)
+        {
+            return;
+        }
+
+        ContentSettings.Logger.LogInfo("Registering settings.");
+
         foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
         {
             foreach (var type in assembly.GetTypes())
@@ -202,6 +225,55 @@ public static class SettingsLoader
             }
         }
 
+        ContentSettings.Logger.LogInfo($"Registered {RegisteredSettings.Count} settings.");
+
         IsInitialized = true;
+    }
+
+    private static void BuildSettingsMenu(SettingsMenu menu, Transform tabs)
+    {
+        var tabsRectTransform = tabs.GetComponent<RectTransform>();
+
+        var scrollViewObject = new GameObject("TabScrollView");
+        scrollViewObject.AddComponent<CanvasRenderer>();
+        scrollViewObject.AddComponent<RectTransform>();
+        scrollViewObject.AddComponent<ScrollRect>();
+        scrollViewObject.transform.SetParent(tabs.transform.parent, false);
+
+        var scrollRectTransform = scrollViewObject.GetComponent<RectTransform>();
+        scrollRectTransform.localPosition = Vector2.zero;
+        scrollRectTransform.sizeDelta = tabsRectTransform.sizeDelta;
+        scrollRectTransform.anchorMin = tabsRectTransform.anchorMin;
+        scrollRectTransform.anchorMax = tabsRectTransform.anchorMax;
+        scrollRectTransform.pivot = tabsRectTransform.pivot;
+
+        var scrollRect = scrollViewObject.GetComponent<ScrollRect>();
+        scrollRect.horizontal = true;
+        scrollRect.vertical = false;
+
+        var viewport = new GameObject("Viewport");
+        viewport.AddComponent<CanvasRenderer>();
+        viewport.AddComponent<RectTransform>();
+        viewport.AddComponent<Mask>().showMaskGraphic = false;
+        viewport.AddComponent<Image>().color = Color.clear;
+
+        var viewportRectTransform = viewport.GetComponent<RectTransform>();
+        viewport.transform.SetParent(scrollViewObject.transform, false);
+        viewportRectTransform.anchorMin = Vector2.zero;
+        viewportRectTransform.anchorMax = Vector2.one;
+        viewportRectTransform.sizeDelta = Vector2.zero;
+        viewportRectTransform.pivot = new Vector2(0.5f, 0.5f);
+
+        tabs.transform.SetParent(viewport.transform, false);
+        tabsRectTransform.anchorMin = Vector2.zero;
+        tabsRectTransform.anchorMax = Vector2.up;
+        tabsRectTransform.pivot = new Vector2(0, 0.5f);
+        tabsRectTransform.sizeDelta = new Vector2(0, tabsRectTransform.sizeDelta.y);
+
+        var contentSizeFitter = tabs.gameObject.AddComponent<ContentSizeFitter>();
+        contentSizeFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+        contentSizeFitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+        scrollRect.content = tabsRectTransform;
     }
 }
