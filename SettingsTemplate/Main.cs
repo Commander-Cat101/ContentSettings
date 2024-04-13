@@ -7,9 +7,9 @@ using ContentSettings.API.Settings;
 using JetBrains.Annotations;
 using Zorro.Settings;
 
-[ContentWarningPlugin("SettingsTemplate", "1.0.0", true)]
-[BepInPlugin("SettingsTemplate", "SettingsTemplate", "1.0.0")]
-public class Main : BaseUnityPlugin
+[ContentWarningPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_VERSION, true)]
+[BepInAutoPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
+public partial class Main : BaseUnityPlugin
 {
     public static Main Instance { get; private set; } = null!;
 
