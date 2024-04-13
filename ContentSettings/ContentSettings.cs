@@ -9,6 +9,7 @@ namespace ContentSettings;
 
 using BepInEx;
 using BepInEx.Logging;
+using global::ContentSettings.API;
 using HarmonyLib;
 
 /// <summary>
@@ -30,5 +31,7 @@ public class ContentSettings : BaseUnityPlugin
         Logger = base.Logger;
 
         Harmony.PatchAll();
+
+        SettingsSyncer.Init();
     }
 }
