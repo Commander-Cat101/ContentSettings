@@ -1,0 +1,8 @@
+apiRules:
+  # Exclude any class under any module named Plugin or MyPluginInfo
+  - exclude:
+      uidRegex: ^LethalAPI\..*\.Plugin$
+      type: Class
+  - exclude:
+      uidRegex: ^LethalAPI\..*\.MyPluginInfo$
+      type: Class

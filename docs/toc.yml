@@ -1,0 +1,6 @@
+- name: Guides
+  href: guides/
+- name: API Reference
+  href: api/
+- name: Changelog
+  topicHref: ../CHANGELOG.md
