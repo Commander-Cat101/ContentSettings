@@ -16,8 +16,8 @@ using HarmonyLib;
 /// The main Content Settings plugin class.
 /// </summary>
 [ContentWarningPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_VERSION, true)]
-[BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
-public class ContentSettings : BaseUnityPlugin
+[BepInAutoPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
+public partial class ContentSettings : BaseUnityPlugin
 {
     /// <summary>
     /// Gets the logger of the plugin.

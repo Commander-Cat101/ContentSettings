@@ -16,14 +16,14 @@ namespace ContentSettings.API.Settings
     /// Interface for syncing settings from the host.
     /// </summary>
     [UsedImplicitly]
-    internal interface ISyncedSetting
+    internal interface ISyncedSetting<TSetting>
     {
         /// <summary>
         /// The lobby data key used for this setting.
         /// </summary>
         /// <returns></returns>
-        string DataKey();
+        string LobbyDataGUID();
 
-        object GetValue();
+        TSetting GetValue();
     }
 }
