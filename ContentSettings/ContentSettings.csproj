@@ -60,6 +60,7 @@
         <Reference Include="Zorro.Core.Runtime" HintPath="$(CW_REFERENCES)\Zorro.Core.Runtime.dll" Private="False" ExcluseAssets="RUNTIME" Publicize="true"/>
         <Reference Include="Zorro.Settings.Runtime" HintPath="$(CW_REFERENCES)\Zorro.Settings.Runtime.dll" Private="False" ExcluseAssets="RUNTIME" Publicize="True"/>
         <Reference Include="Zorro.UI.Runtime" HintPath="$(CW_REFERENCES)\Zorro.UI.Runtime.dll" Private="False" ExcluseAssets="RUNTIME" Publicize="true"/>
+        <Reference Include="PhotonUnityNetworking" HintPath="$(CW_REFERENCES)\PhotonUnityNetworking.dll" Private="False" ExcluseAssets="RUNTIME" Publicize="true"/>
     </ItemGroup>
 
     <ItemGroup Condition="$(CI) == 'true'">
@@ -90,6 +91,11 @@
 
     <ItemGroup>
         <AdditionalFiles Include="$(MSBuildThisFileDirectory)stylecop.json" Link="stylecop.json"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="contentsettings.bundle" />
+      <EmbeddedResource Include="contentsettings.bundle" />
     </ItemGroup>
 
     <Target Name="Husky" BeforeTargets="Restore;CollectPackageReferences" Condition="'$(HUSKY)' != 0">

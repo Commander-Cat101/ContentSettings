@@ -7,9 +7,11 @@
 
 namespace ContentSettings;
 
+using API;
 using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+using Internal;
 
 /// <summary>
 /// The main Content Settings plugin class.
@@ -29,6 +31,13 @@ public partial class ContentSettings : BaseUnityPlugin
     {
         Logger = base.Logger;
 
+        SettingsAssets.LoadAssets();
+
         Harmony.PatchAll();
+    }
+
+    private void Update()
+    {
+        SettingsLoader.Update();
     }
 }

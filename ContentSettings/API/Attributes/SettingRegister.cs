@@ -22,7 +22,7 @@ public class SettingRegister : Attribute
     /// </summary>
     /// <param name="tab">The name of the tab to register the setting to.</param>
     /// <param name="category">The name of the tab category to register the setting to.</param>
-    public SettingRegister(string tab, string category)
+    public SettingRegister(string tab, string? category = null)
     {
         Tab = tab;
         Category = category;
@@ -36,5 +36,5 @@ public class SettingRegister : Attribute
     /// <summary>
     /// Gets the name of the tab category to register the setting to.
     /// </summary>
-    public string Category { get; }
+    public string? Category { get; }
 }

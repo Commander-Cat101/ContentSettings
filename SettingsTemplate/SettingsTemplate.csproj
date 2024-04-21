@@ -41,6 +41,7 @@
     <ItemGroup Condition="$(CI) != 'true'">
         <Reference Include="Assembly-CSharp" HintPath="$(CW_REFERENCES)\Assembly-CSharp.dll" Publicize="True" Private="False" ExcluseAssets="RUNTIME" />
         <Reference Include="Zorro.Settings.Runtime" HintPath="$(CW_REFERENCES)\Zorro.Settings.Runtime.dll" Publicize="True" Private="False" ExcluseAssets="RUNTIME" />
+        <Reference Include="Unity.Mathematics" HintPath="$(CW_REFERENCES)\Unity.Mathematics.dll" Publicize="True" Private="False" ExcluseAssets="RUNTIME" />
     </ItemGroup>
 
     <ItemGroup Condition="$(CI) == 'true'">
