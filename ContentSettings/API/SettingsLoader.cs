@@ -9,13 +9,13 @@ namespace ContentSettings.API;
 
 using System.Collections.Generic;
 using Zorro.Settings;
-using TMPro;
-using UnityEngine.Localization.PropertyVariants;
 using JetBrains.Annotations;
 using System;
+using System.Linq;
 using System.Reflection;
-using UnityEngine;
-using UnityEngine.UI;
+using Internal;
+using Settings.UI;
+using Zorro.Core;
 using Object = UnityEngine.Object;
 
 /// <summary>
@@ -39,12 +39,41 @@ public static class SettingsLoader
 
     private static bool IsDirty { get; set; }
 
+    private static SettingsNavigation? SettingsNavigation { get; set; }
+
     /// <summary>
     /// Returns whether the settings manager has a tab.
     /// </summary>
     /// <param name="tab">The tab to check for.</param>
     /// <returns>True if the settings manager has the tab; otherwise, false.</returns>
     public static bool HasTab(string tab) => SettingsByCategoryByTab.ContainsKey(tab);
+
+    /// <summary>
+    /// Gets the settings for the specified tab.
+    /// </summary>
+    /// <param name="tab">The tab to get the settings for.</param>
+    /// <param name="settingsByCategory">The settings by category for the tab, if found.</param>
+    /// <returns>True if the tab was found; otherwise, false.</returns>
+    public static bool TryGetTab(string tab, out Dictionary<string, List<Setting>> settingsByCategory)
+    {
+        return SettingsByCategoryByTab.TryGetValue(tab, out settingsByCategory);
+    }
+
+    /// <summary>
+    /// Get the instance of the specified setting.
+    /// </summary>
+    /// <typeparam name="T">The type of the setting to get.</typeparam>
+    /// <returns>The instance of the setting.</returns>
+    public static T? GetSetting<T>()
+        where T : Setting
+    {
+        if (RegisteredSettings.TryGetValue(typeof(T), out var setting))
+        {
+            return (T)setting;
+        }
+
+        return null;
+    }
 
     /// <summary>
     /// Register a custom setting.
@@ -54,10 +83,12 @@ public static class SettingsLoader
     /// <param name="category">The category of the setting.</param>
     /// <param name="setting">The setting to register.</param>
     [UsedImplicitly]
-    public static void RegisterSetting(string tab, string category, Setting setting)
+    public static void RegisterSetting(string tab, string? category, Setting setting)
     {
+        category ??= string.Empty;
+
         var settingType = setting.GetType();
-        ContentSettings.Logger.LogInfo($"Registering setting {settingType.Name}({settingType.BaseType?.Name}) to tab {tab} and category {category}.");
+        ContentSettings.Logger.LogDebug($"Registering setting {settingType.Name}({settingType.BaseType?.Name}) to tab {tab} and category {category}.");
 
         var settingsByCategory = SettingsByCategoryByTab
             .GetValueOrDefault(tab, new Dictionary<string, List<Setting>>());
@@ -83,6 +114,17 @@ public static class SettingsLoader
     }
 
     /// <summary>
+    /// Register a custom setting to the provided tab without a category.
+    /// </summary>
+    /// <param name="tab">The tab to register the setting to.</param>
+    /// <param name="setting">The setting to register.</param>
+    [UsedImplicitly]
+    public static void RegisterSetting(string tab, Setting setting)
+    {
+        RegisterSetting(tab, string.Empty, setting);
+    }
+
+    /// <summary>
     /// Register a custom setting to the default MODDED tab and empty category.
     /// </summary>
     /// <param name="setting">The setting to register.</param>
@@ -93,51 +135,11 @@ public static class SettingsLoader
     }
 
     /// <summary>
-    /// Loads the settings into the settings menu.
-    /// </summary>
-    /// <param name="tab">The tab to load the settings from.</param>
-    /// <param name="menu">The settings menu to load the settings into.</param>
-    internal static void LoadSettingsMenu(string tab, SettingsMenu menu)
-    {
-        if (IsDirty)
-        {
-            CreateSettings(menu);
-            IsDirty = false;
-        }
-
-        if (!SettingsByCategoryByTab.TryGetValue(tab, out var settingsByCategory))
-        {
-            return;
-        }
-
-        foreach (var settingsCell in menu.m_cells)
-        {
-            Object.Destroy(settingsCell.gameObject);
-        }
-
-        menu.m_cells.Clear();
-
-        var settingsHandler = GameHandler.Instance.SettingsHandler;
-
-        foreach (var (category, settings) in settingsByCategory)
-        {
-            // var categoryCell = settingsHandler.CreateCategoryCell(menu.transform, category);
-            // menu.m_cells.Add(categoryCell);
-            foreach (var setting in settings)
-            {
-                var component = Object.Instantiate(menu.m_settingsCell, menu.m_settingsContainer)
-                    .GetComponent<SettingsCell>();
-                component.Setup(setting, settingsHandler);
-                menu.m_cells.Add(component);
-            }
-        }
-    }
-
-    /// <summary>
     /// Saves all registered settings.
     /// </summary>
     internal static void SaveSettings()
     {
+        ContentSettings.Logger.LogDebug("Saving settings to disk.");
         foreach (var setting in Settings)
         {
             setting.Save(SaveLoader);
@@ -149,37 +151,30 @@ public static class SettingsLoader
     /// </summary>
     /// <param name="menu">The settings menu to create the tab in.</param>
     /// <exception cref="System.Exception">Thrown when the existing tab to create the modded settings tab from is not found.</exception>
-    internal static void CreateSettings(SettingsMenu menu)
+    internal static void CreateSettingsMenu(SettingsMenu menu)
     {
+        ContentSettings.Logger.LogDebug("Initializing settings.");
+
         var tabs = menu.transform.Find("Content")?.Find("TABS");
         if (tabs == null)
         {
             throw new Exception("Failed to find settings tab.");
         }
 
-        // BuildSettingsMenu(menu, tabs);
-        var existingTab = tabs.GetChild(0)?.gameObject;
-        if (existingTab == null)
+        if (SettingsNavigation == null)
         {
-            throw new Exception("Failed to find existing tab.");
-        }
-
-        foreach (var tab in SettingsByCategoryByTab.Keys)
-        {
-            if (tabs.Find(tab) != null)
+            var settingsMenuObject = Object.Instantiate(SettingsAssets.SettingsNavigationPrefab, tabs.parent, false);
+            var settingsTabsTransform = settingsMenuObject.transform.FindChildRecursive("Content");
+            var settingsNavigation = settingsTabsTransform.gameObject.AddComponent<SettingsNavigation>();
+            foreach (var tab in SettingsByCategoryByTab.Keys)
             {
-                continue;
+                settingsNavigation.Create(tab);
             }
 
-            var customSettingsTab = Object.Instantiate(existingTab, tabs, true);
-            customSettingsTab.name = tab;
-
-            var customSettingsTabText = customSettingsTab.transform.GetChild(1);
-            Object.Destroy(customSettingsTabText.GetComponent<GameObjectLocalizer>());
-            customSettingsTabText.GetComponent<TextMeshProUGUI>().SetText(tab);
-
-            LoadSettingsMenu(tab, menu);
+            SettingsNavigation = settingsNavigation;
         }
+
+        tabs.gameObject.SetActive(false);
     }
 
     /// <summary>
@@ -192,88 +187,64 @@ public static class SettingsLoader
             return;
         }
 
-        ContentSettings.Logger.LogInfo("Registering settings.");
+        RegisterDefaultSettings();
 
-        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        ContentSettings.Logger.LogDebug("Registering settings.");
+
+        foreach (var type in AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes()))
         {
-            foreach (var type in assembly.GetTypes())
+            if (type.IsAbstract || type.IsInterface || !type.IsSubclassOf(typeof(Setting)))
             {
-                if (type.IsAbstract || type.IsInterface)
-                {
-                    continue;
-                }
+                continue;
+            }
 
-                if (!type.IsSubclassOf(typeof(Setting)))
-                {
-                    continue;
-                }
+            if (RegisteredSettings.ContainsKey(type))
+            {
+                continue;
+            }
 
-                if (RegisteredSettings.ContainsKey(type))
-                {
-                    ContentSettings.Logger.LogInfo($"Setting {type.Name} is already registered.");
-                    continue;
-                }
+            var settingDefinitions = type.GetCustomAttributes<Attributes.SettingRegister>(false);
+            Setting? setting = null;
+            foreach (var settingDefinition in settingDefinitions)
+            {
+                setting ??= (Setting)Activator.CreateInstance(type);
 
-                var settingDefinitions = type.GetCustomAttributes<Attributes.SettingRegister>(false);
-                Setting? setting = null;
-                foreach (var settingDefinition in settingDefinitions)
-                {
-                    setting ??= (Setting)Activator.CreateInstance(type);
-
-                    RegisterSetting(settingDefinition.Tab, settingDefinition.Category, setting);
-                }
+                RegisterSetting(settingDefinition.Tab, settingDefinition.Category, setting);
             }
         }
 
-        ContentSettings.Logger.LogInfo($"Registered {RegisteredSettings.Count} settings.");
+        ContentSettings.Logger.LogDebug($"Registered {RegisteredSettings.Count} settings.");
 
         IsInitialized = true;
     }
 
-    private static void BuildSettingsMenu(SettingsMenu menu, Transform tabs)
+    /// <summary>
+    /// Called every frame to update the settings.
+    /// </summary>
+    internal static void Update()
     {
-        var tabsRectTransform = tabs.GetComponent<RectTransform>();
+        foreach (var setting in Settings)
+        {
+            setting.Update();
+        }
+    }
 
-        var scrollViewObject = new GameObject("TabScrollView");
-        scrollViewObject.AddComponent<CanvasRenderer>();
-        scrollViewObject.AddComponent<RectTransform>();
-        scrollViewObject.AddComponent<ScrollRect>();
-        scrollViewObject.transform.SetParent(tabs.transform.parent, false);
+    /// <summary>
+    /// Register the default settings from the original settings system.
+    /// </summary>
+    private static void RegisterDefaultSettings()
+    {
+        ContentSettings.Logger.LogDebug("Registering default settings.");
 
-        var scrollRectTransform = scrollViewObject.GetComponent<RectTransform>();
-        scrollRectTransform.localPosition = Vector2.zero;
-        scrollRectTransform.sizeDelta = tabsRectTransform.sizeDelta;
-        scrollRectTransform.anchorMin = tabsRectTransform.anchorMin;
-        scrollRectTransform.anchorMax = tabsRectTransform.anchorMax;
-        scrollRectTransform.pivot = tabsRectTransform.pivot;
-
-        var scrollRect = scrollViewObject.GetComponent<ScrollRect>();
-        scrollRect.horizontal = true;
-        scrollRect.vertical = false;
-
-        var viewport = new GameObject("Viewport");
-        viewport.AddComponent<CanvasRenderer>();
-        viewport.AddComponent<RectTransform>();
-        viewport.AddComponent<Mask>().showMaskGraphic = false;
-        viewport.AddComponent<Image>().color = Color.clear;
-
-        var viewportRectTransform = viewport.GetComponent<RectTransform>();
-        viewport.transform.SetParent(scrollViewObject.transform, false);
-        viewportRectTransform.anchorMin = Vector2.zero;
-        viewportRectTransform.anchorMax = Vector2.one;
-        viewportRectTransform.sizeDelta = Vector2.zero;
-        viewportRectTransform.pivot = new Vector2(0.5f, 0.5f);
-
-        tabs.transform.SetParent(viewport.transform, false);
-        tabsRectTransform.anchorMin = Vector2.zero;
-        tabsRectTransform.anchorMax = Vector2.up;
-        tabsRectTransform.pivot = new Vector2(0, 0.5f);
-        tabsRectTransform.sizeDelta = new Vector2(0, tabsRectTransform.sizeDelta.y);
-
-        var contentSizeFitter = tabs.gameObject.AddComponent<ContentSizeFitter>();
-        contentSizeFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-        contentSizeFitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
-
-        scrollRect.content = tabsRectTransform;
+        var settingsHandler = GameHandler.Instance.SettingsHandler;
+        foreach (var category in Enum.GetValues(typeof(SettingCategory)))
+        {
+            var settingCategory = (SettingCategory)category;
+            var categorySettings = settingsHandler.GetSettings(settingCategory);
+            foreach (var setting in categorySettings)
+            {
+                RegisterSetting(settingCategory.ToString().ToUpper(), string.Empty, setting);
+            }
+        }
     }
 }

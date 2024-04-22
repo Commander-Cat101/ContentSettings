@@ -1,4 +1,4 @@
-# Content Settings
+# ContentSettings
 
 A library for adding custom settings to Content Warning.
 
@@ -9,15 +9,16 @@ A library for adding custom settings to Content Warning.
 
 ## Features
 - [x] Register custom settings
-  - Manual registration
-  - Attribute-based registration
+  - [x] Manual registration
+  - [x] Attribute-based registration
+  - [x] Custom categories
 - [x] Addition inputs
-  - [x] Text input
+  - [x] Text input (TextField)
+  - [x] Integer input (Slider)
+  - [x] Boolean input (Checkbox)
 
 ### Planned
 - [ ] More input types
-  - [ ] Checkbox
-- [ ] Custom categories
 - [ ] Networking support
 
 
@@ -30,7 +31,7 @@ If you just want to look at some code, take a look at the [Example Plugin](./Set
 ```csharp
 void Awake()
 {
-    SettingsLoader.RegisterSetting("YOUR TAB", "YOUR CATEGORY", new ExampleSetting());
+    SettingsLoader.RegisterSetting("YOUR TAB", new ExampleSetting());
 }
 
 public class ExampleSetting : FloatSetting, ICustomSetting

@@ -8,6 +8,7 @@
 namespace ContentSettings.API.Settings;
 
 using DebugUI;
+using Internal;
 using UnityEngine;
 using Zorro.Settings;
 using Zorro.Settings.DebugUI;
@@ -35,10 +36,7 @@ public abstract class TextSetting : Setting
     /// Save the setting using the provided loader.
     /// </summary>
     /// <param name="saver">The loader to save the setting with.</param>
-    public override void Save(ISettingsSaveLoad saver)
-    {
-        saver.SaveString(GetType(), Value);
-    }
+    public override void Save(ISettingsSaveLoad saver) => saver.SaveString(GetType(), Value);
 
     /// <summary>
     /// Sets the value of the setting and saves it.
@@ -56,10 +54,7 @@ public abstract class TextSetting : Setting
     /// Gets the setting UI for the setting.
     /// </summary>
     /// <returns>The setting UI for the setting.</returns>
-    public override GameObject GetSettingUICell()
-    {
-        return SettingsMapper.Instance.TextSettingCell;
-    }
+    public override GameObject GetSettingUICell() => SettingsMapper.TextSettingCell;
 
     /// <summary>
     /// Gets the debug UI for the setting.
