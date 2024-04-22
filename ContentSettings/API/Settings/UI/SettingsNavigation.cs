@@ -7,9 +7,7 @@
 
 namespace ContentSettings.API.Settings.UI;
 
-using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Internal;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -20,29 +18,31 @@ using Zorro.Core;
 /// A component containing settings tabs for a settings menu.
 /// </summary>
 [UsedImplicitly]
-[SuppressMessage("StyleCop.CSharp.NamingRules", "SA1307", Justification = "Required for Unity serialization.")]
-[SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1401", Justification = "Required for Unity serialization.")]
 public class SettingsNavigation : MonoBehaviour
 {
     /// <summary>
     /// The settings menu this tab belongs to.
     /// </summary>
-    public SettingsMenu? settingsMenu;
+    [SerializeField]
+    private SettingsMenu? settingsMenu;
 
     /// <summary>
     /// The currently selected tab.
     /// </summary>
-    public SettingsTab? selectedTab;
+    [SerializeField]
+    private SettingsTab? selectedTab;
 
     /// <summary>
     /// The list of settings tabs available.
     /// </summary>
-    public List<SettingsTab> settingsTabs = new ();
+    [SerializeField]
+    private List<SettingsTab> settingsTabs = new ();
 
     /// <summary>
     /// The number of settings to display per page.
     /// </summary>
-    public int pageSize = 3;
+    [SerializeField]
+    private int pageSize = 3;
 
     /// <summary>
     /// Gets a value indicating the current page of settings tabs.

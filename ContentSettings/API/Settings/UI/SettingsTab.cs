@@ -7,7 +7,6 @@
 
 namespace ContentSettings.API.Settings.UI;
 
-using System.Diagnostics.CodeAnalysis;
 using BepInEx;
 using Internal;
 using TMPro;
@@ -17,14 +16,13 @@ using UnityEngine.UI;
 /// <summary>
 /// A component representing a tab in a settings menu, which can be selected to show settings belonging to the tab.
 /// </summary>
-[SuppressMessage("StyleCop.CSharp.NamingRules", "SA1307", Justification = "Required for Unity serialization.")]
-[SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1401", Justification = "Required for Unity serialization.")]
 public class SettingsTab : SettingsButton
 {
     /// <summary>
     /// The current settings menu instance.
     /// </summary>
-    public SettingsMenu? settingsMenu;
+    [SerializeField]
+    private SettingsMenu? settingsMenu;
 
     /// <summary>
     /// Shows the settings for the tab.

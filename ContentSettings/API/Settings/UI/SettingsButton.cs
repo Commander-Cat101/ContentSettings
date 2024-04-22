@@ -17,19 +17,19 @@ using UnityEngine.UI;
 /// <summary>
 /// A component representing a button in a settings menu, providing hover and selection states.
 /// </summary>
-[SuppressMessage("StyleCop.CSharp.NamingRules", "SA1307", Justification = "Required for Unity serialization.")]
-[SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1401", Justification = "Required for Unity serialization.")]
 public class SettingsButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     /// <summary>
     /// The text mesh pro component of the tab, displaying the tab name.
     /// </summary>
-    public TextMeshProUGUI? textMeshPro;
+    [SerializeField]
+    private TextMeshProUGUI? textMeshPro;
 
     /// <summary>
     /// The image component of the tab, displaying the tab icon.
     /// </summary>
-    public Image? image;
+    [SerializeField]
+    private Image? image;
 
     /// <summary>
     /// Gets or sets the display name of the button.
