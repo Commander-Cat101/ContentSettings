@@ -7,11 +7,13 @@
 
 namespace ContentSettings.API.Settings.UI;
 
-using BepInEx;
+using System.Linq;
 using Internal;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Zorro.Core;
+using Zorro.Settings;
 
 /// <summary>
 /// A component representing a tab in a settings menu, which can be selected to show settings belonging to the tab.
@@ -39,42 +41,26 @@ public class SettingsTab : SettingsButton
             return;
         }
 
-        foreach (var settingsCell in settingsMenu.m_cells)
-        {
-            Destroy(settingsCell.gameObject);
-        }
-
+        settingsMenu.m_cells.ForEach(c => Destroy(c.gameObject));
         settingsMenu.m_cells.Clear();
-
-        foreach (Transform child in settingsMenu.m_settingsContainer)
-        {
-            Destroy(child.gameObject);
-        }
+        settingsMenu.m_settingsContainer?.ClearChildren();
 
         if (settingsMenu.m_settingsCell == null || settingsMenu.m_settingsContainer == null)
         {
             return;
         }
 
-        var settingsHandler = GameHandler.Instance.SettingsHandler;
-
-        foreach (var (category, settings) in settingsByCategory)
+        if (settingsByCategory.ContainsKey(string.Empty))
         {
-            if (!category.IsNullOrWhiteSpace())
-            {
-                var categoryCell = Instantiate(
-                    SettingsAssets.SettingsCategoryPrefab,
-                    settingsMenu.m_settingsContainer);
-                categoryCell.GetComponentInChildren<TextMeshProUGUI>().text = category;
-            }
+            settingsByCategory[string.Empty].ForEach(CreateSettingCell);
+        }
 
-            foreach (var setting in settings)
-            {
-                var component = Instantiate(settingsMenu.m_settingsCell, settingsMenu.m_settingsContainer)
-                    .GetComponent<SettingsCell>();
-                component.Setup(setting, settingsHandler);
-                settingsMenu.m_cells.Add(component);
-            }
+        foreach (var (category, settings) in settingsByCategory.Where(s => s.Key != string.Empty))
+        {
+            var categoryCell = Instantiate(SettingsAssets.SettingsCategoryPrefab, settingsMenu.m_settingsContainer);
+            categoryCell.GetComponentInChildren<TextMeshProUGUI>().text = category;
+
+            settings.ForEach(CreateSettingCell);
         }
     }
 
@@ -100,5 +86,18 @@ public class SettingsTab : SettingsButton
         base.Awake();
 
         settingsMenu = GetComponentInParent<SettingsMenu>();
+    }
+
+    private void CreateSettingCell(Setting setting)
+    {
+        if (settingsMenu == null)
+        {
+            throw new System.Exception("Settings menu is null.");
+        }
+
+        var component = Instantiate(settingsMenu.m_settingsCell, settingsMenu.m_settingsContainer)
+            .GetComponent<SettingsCell>();
+        component.Setup(setting, GameHandler.Instance.SettingsHandler);
+        settingsMenu.m_cells.Add(component);
     }
 }
