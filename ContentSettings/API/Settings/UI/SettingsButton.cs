@@ -7,7 +7,6 @@
 
 namespace ContentSettings.API.Settings.UI;
 
-using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
 using TMPro;
 using UnityEngine;
