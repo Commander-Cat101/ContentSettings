@@ -31,7 +31,7 @@ public static class SettingsLoader
 
     private static DefaultSettingsSaveLoad SaveLoader { get; } = new ();
 
-    private static Dictionary<string, Dictionary<string, List<Setting>>> SettingsByCategoryByTab { get; } = new ();
+    private static Dictionary<string, Dictionary<string, List<Setting>>> SettingsByCategoryByTab { get; set; } = new ();
 
     private static Dictionary<Type, Setting> RegisteredSettings { get; } = new ();
 
@@ -46,6 +46,7 @@ public static class SettingsLoader
     /// </summary>
     /// <param name="tab">The tab to check for.</param>
     /// <returns>True if the settings manager has the tab; otherwise, false.</returns>
+    [UsedImplicitly]
     public static bool HasTab(string tab) => SettingsByCategoryByTab.ContainsKey(tab);
 
     /// <summary>
@@ -236,6 +237,9 @@ public static class SettingsLoader
     {
         ContentSettings.Logger.LogDebug("Registering default settings.");
 
+        var settingsByCategoryByTab = SettingsByCategoryByTab;
+        SettingsByCategoryByTab = new ();
+
         var settingsHandler = GameHandler.Instance.SettingsHandler;
         foreach (var category in Enum.GetValues(typeof(SettingCategory)))
         {
@@ -243,8 +247,13 @@ public static class SettingsLoader
             var categorySettings = settingsHandler.GetSettings(settingCategory);
             foreach (var setting in categorySettings)
             {
-                RegisterSetting(settingCategory.ToString().ToUpper(), string.Empty, setting);
+                RegisterSetting(settingCategory.ToString().ToUpper(), setting);
             }
+        }
+
+        foreach (var tab in settingsByCategoryByTab.Keys.Where(tab => !SettingsByCategoryByTab.ContainsKey(tab)))
+        {
+            SettingsByCategoryByTab.Add(tab, settingsByCategoryByTab[tab]);
         }
     }
 }
